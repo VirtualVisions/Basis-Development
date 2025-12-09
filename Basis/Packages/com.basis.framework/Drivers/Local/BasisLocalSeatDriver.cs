@@ -52,6 +52,24 @@ namespace Basis.Scripts.Drivers
         private float previousHeadYawVsSeat = 0.0f;
         private bool hasEvent = false;
 
+        public bool DoesSeatingBlockLocalDesktopEyePitch()
+        {
+            if (_seat == null)
+            {
+                return false; // Pitch is allowed if not seated.
+            }
+            return false;
+        }
+
+        public bool DoesSeatingBlockLocalDesktopEyeYaw()
+        {
+            if (_seat == null)
+            {
+                return true; // Yaw is not allowed if not seated (handled by player rotation instead).
+            }
+            return false;
+        }
+
         private void GrabLatestTposeLocalScaleData()
         {
             leftLowerLegOffset = BasisLocalBoneDriver.LeftFootControl.TposeLocalScaled.position - BasisLocalBoneDriver.LeftLowerLegControl.TposeLocalScaled.position;
@@ -91,6 +109,8 @@ namespace Basis.Scripts.Drivers
                 Stand();
             }
             _seat = seat;
+            // Offset the player's position/rotation to match the seat and keep track of the
+            // old position/rotation so that it can be restored later when exiting the seat.
             previousRelativePosition = _seat.transform.InverseTransformPoint(LocalPlayer.transform.position);
             if (BasisDesktopEye.Instance != null)
             {
@@ -99,9 +119,13 @@ namespace Basis.Scripts.Drivers
             }
             if (BasisDeviceManagement.Instance.FindDevice(out BasisInput Input, TransformBinders.BoneControl.BasisBoneTrackedRole.CenterEye))
             {
-                Vector3 Offset = -Input.ScaledDeviceCoord.position;
-                Offset.y = 0;
-                BasisInput.OffsetCoords = new Common.BasisCalibratedCoords(Offset, Quaternion.identity);
+                Vector3 offset = -Input.ScaledDeviceCoord.position;
+                offset.y = 0.0f;
+                Quaternion rot = Input.ScaledDeviceCoord.rotation;
+                rot.x = 0.0f;
+                rot.z = 0.0f;
+                rot.Normalize();
+                BasisInput.OffsetCoords = new Common.BasisCalibratedCoords(offset, Quaternion.Inverse(rot));
             }
             // Disable character movement and add a movement lock so other systems respect being seated.
             BasisLocalVirtualSpineDriver.HipsFreezeToTpose = true;
@@ -112,8 +136,13 @@ namespace Basis.Scripts.Drivers
             LocalPlayer.LocalAnimatorDriver.PauseAnimator = true;
             if (BasisDesktopEye.Instance != null)
             {
-                // Set the player's relative yaw to zero to face forward on the seat, but don't do the same for pitch.
+                // Set the player's relative yaw to zero to face forward on the seat.
                 BasisDesktopEye.Instance.rotationYaw = 0.0f;
+                // Only do the same for pitch if the seat needs to block or consume pitch.
+                if (DoesSeatingBlockLocalDesktopEyePitch())
+                {
+                    BasisDesktopEye.Instance.rotationPitch = 0.0f;
+                }
             }
             _setAllOverrideUsages(true);
             LocalPlayer.OnPreSimulateBones += OnSimulate;
@@ -143,7 +172,7 @@ namespace Basis.Scripts.Drivers
             LocalPlayer.LocalCharacterDriver.MovementLock.Remove(nameof(BasisLocalSeatDriver));
             LocalPlayer.LocalCharacterDriver.CrouchingLock.Remove(nameof(BasisLocalSeatDriver));
             LocalPlayer.LocalCharacterDriver.IsEnabled = true;
-            BasisInput.OffsetCoords = new Common.BasisCalibratedCoords(Vector3.zero,Quaternion.identity);
+            BasisInput.OffsetCoords = new Common.BasisCalibratedCoords(Vector3.zero, Quaternion.identity);
             _setAllOverrideUsages(false);
             if (BasisDesktopEye.Instance != null)
             {
@@ -299,7 +328,6 @@ namespace Basis.Scripts.Drivers
             Vector3 playerPelvisLocalPos = 0.5f * (BasisLocalBoneDriver.LeftUpperLegControl.TposeLocalScaled.position + BasisLocalBoneDriver.RightUpperLegControl.TposeLocalScaled.position);
             Vector3 playerPos = pelvisWorldPos - playerRot * playerPelvisLocalPos;
 
-           
             LocalPlayer.transform.SetPositionAndRotation(playerPos, playerRot);
            //dont need todo this LocalPlayer.AvatarTransform.SetPositionAndRotation(playerPos, playerRot);
             LocalPlayer.LocalAnimatorDriver.HandleTeleport();

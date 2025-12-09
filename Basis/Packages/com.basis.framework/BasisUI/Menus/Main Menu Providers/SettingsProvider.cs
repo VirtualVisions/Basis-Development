@@ -357,6 +357,7 @@ namespace Basis.BasisUI
                 "Linear",
                 "Point",
                 "FSR",
+                "STP"
             });
             dropdownAntialiasing.AssignBinding(BasisSettingsDefaults.Antialiasing);
 
@@ -407,7 +408,7 @@ namespace Basis.BasisUI
             // Render Scale
             PanelSlider sliderRenderResolution = PanelSlider.CreateEntryAndBind(
                 renderingGroup.ContentParent,
-                new PanelSlider.SliderSettings("Render Scale", "", 0, 1, false, 3, ValueDisplayMode.Percentage),
+                new PanelSlider.SliderSettings("Render Scale", "", 0, 1.5f, false, 3, ValueDisplayMode.percentageFromZero),
                 BasisSettingsDefaults.RenderResolution);
 
             // Resolution (logical / display resolution)
@@ -467,7 +468,7 @@ namespace Basis.BasisUI
             PanelSlider sliderMeshLOD = PanelSlider.CreateEntryAndBind(
                 advancedGroup.ContentParent,
                 new PanelSlider.SliderSettings("Avatar LOD Multiplier", "", 0, 1, false, 3, ValueDisplayMode.Percentage),
-                BasisSettingsDefaults.MeshLOD);
+                BasisSettingsDefaults.AvatarMeshLOD);
 
             // Global Mesh LOD
             PanelSlider sliderGlobalMeshLOD = PanelSlider.CreateEntryAndBind(

@@ -79,10 +79,10 @@ namespace Basis.BasisUI
             new("Debug Visuals", new BasisPlatformDefault<bool>(false));
 
         public static BasisSettingsBinding<string> MemoryAllocation =>
-            new("HDR Support", new BasisPlatformDefault<string>
+            new("Memory Allocation", new BasisPlatformDefault<string>
             {
                 windows = "Dynamic",
-                android = "Very Low",
+                android = "Dynamic",
                 linux = "Dynamic",
                 other = "Dynamic"
             });
@@ -111,8 +111,8 @@ namespace Basis.BasisUI
         public static BasisSettingsBinding<float> AvatarScale =>
     new("Scale Of Avatar", new BasisPlatformDefault<float>(1.6f));
 
-        public static BasisSettingsBinding<float> MeshLOD =>
-            new("Mesh Lod", new BasisPlatformDefault<float>
+        public static BasisSettingsBinding<float> AvatarMeshLOD =>
+            new("avatarmeshlod", new BasisPlatformDefault<float>
             {
                 windows = 0.05f,
                 android = 0.1f,

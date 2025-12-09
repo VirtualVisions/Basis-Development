@@ -160,7 +160,7 @@ namespace Basis.Scripts.Device_Management.Devices.Desktop
         /// </summary>
         public void PlayerInitialized()
         {
-            BasisLocalInputActions.Instance.AvatarEyeInput = this;
+            BasisLocalInputActions.Instance.DesktopEyeInput = this;
             Camera = BasisLocalCameraDriver.Instance.Camera;
 
             BasisDeviceManagement Device = BasisDeviceManagement.Instance;
@@ -189,9 +189,15 @@ namespace Basis.Scripts.Device_Management.Devices.Desktop
             LookRotationVector = delta;
         }
 
+        public bool IsRotationLocked()
+        {
+            return LookRotationLock;
+        }
+
         /// <summary>
         /// Applies yaw/pitch rotation based on the given input vector.
         /// Handles mouse-look simulation for the eye.
+        /// Note: This is relative to the player's non-head rotation. The final camera rotation is that, combined with this eye rotation.
         /// </summary>
         /// <param name="lookVector">Delta vsector from input system.</param>
         public void HandleLookRotation(Vector2 lookVector)
@@ -200,9 +206,15 @@ namespace Basis.Scripts.Device_Management.Devices.Desktop
             {
                 return;
             }
-
-            rotationYaw += lookVector.x * rotationSpeed; // yaw
-            rotationPitch -= lookVector.y * rotationSpeed; // pitch (invert Y)
+            // Only allow local desktop pitch/yaw if it's okay with the seating system.
+            if (!BasisLocalPlayer.Instance.LocalSeatDriver.DoesSeatingBlockLocalDesktopEyePitch())
+            {
+                rotationPitch -= lookVector.y * rotationSpeed; // pitch (invert Y)
+            }
+            if (!BasisLocalPlayer.Instance.LocalSeatDriver.DoesSeatingBlockLocalDesktopEyeYaw())
+            {
+                rotationYaw += lookVector.x * rotationSpeed; // yaw
+            }
         }
         /// <summary>
         /// Main polling loop for updating eye input state.
